@@ -210,10 +210,15 @@ module ActiveRecord
           end
           yield
         else
-          transaction_manager.within_new_transaction(options) { yield }
+          begin
+            transaction_manager.within_new_transaction(options) { yield }
+          rescue ActiveRecord::Rollback
+            # `ActiveRecord::Rollback` is a special exception that's used to
+            # manually rollback transactions. Once the rollback is handled,
+            # the "exception" can be safely discarded since it's not a real
+            # error.
+          end
         end
-      rescue ActiveRecord::Rollback
-        # rollbacks are silently swallowed
       end
 
       attr_reader :transaction_manager #:nodoc:

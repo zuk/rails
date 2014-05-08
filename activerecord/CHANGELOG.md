@@ -1,3 +1,27 @@
+*   Fixed "fake" nested transactions swallowing manual rollbacks
+
+    Previously, `ActiveRecord::Rollback` are silently swallowed by all transaction
+    blocks. The intention behind this is that these special "exceptions" are only
+    used to signal a rollback request to Active Record, thus they should be
+    discarded after the rollback request is handled.
+
+    However, this is incorrect for nested transactions. By default, nested
+    transaction blocks are effectively a no-op – they simply become part of the
+    parent transaction†. To achieve this, the correct behaviour is to "bubble up"
+    the `ActiveRecord::Rollback` "exception", which allow the first parent
+    transaction block with a real database transaction to correctly handle the
+    rollback.
+
+    The documentation has been changed to reflect this. This effectively rolls
+    back 53bbbcc.
+
+    Fixes #3455, #14698.
+
+    † The reason that nested transactions defaults to no-op is that savepoints are
+    not supported in all databases.
+
+    *Godfrey Chan*
+
 *   `nil` as a value for a binary column in a query no longer logs as
     "<NULL binary data>", and instead logs as just "nil".
 
