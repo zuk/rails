@@ -21,6 +21,10 @@ class TransactionCallbacksTest < ActiveRecord::TestCase
       self.save! if save_on_after_create
     end
 
+    after_create do
+      raise ActiveRecord::Rollback if content == "rollback"
+    end
+
     def history
       @history ||= []
     end
@@ -109,7 +113,16 @@ class TransactionCallbacksTest < ActiveRecord::TestCase
     topic = TopicWithCallbacks.create!(:title => "New topic", :written_on => Date.today)
     reply = topic.replies.create
 
+    assert_not reply.persisted?
     assert_equal [], reply.history
+  end
+
+  def test_rollback_in_after_create
+    topic = TopicWithCallbacks.create!(:title => "New topic", :written_on => Date.today)
+    reply = topic.replies.create(content: "rollback")
+
+    assert_not reply.persisted?
+    assert_equal "rollback", reply.content
   end
 
   def test_only_call_after_commit_on_create_and_doesnt_leaky

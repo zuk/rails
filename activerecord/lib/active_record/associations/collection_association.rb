@@ -391,13 +391,14 @@ module ActiveRecord
 
       def replace_on_target(record, index, skip_callbacks)
         callback(:before_add, record) unless skip_callbacks
-        yield(record) if block_given?
 
         if index
           @target[index] = record
         else
           @target << record
         end
+
+        yield(record) if block_given?
 
         callback(:after_add, record) unless skip_callbacks
         set_inverse_instance(record)
@@ -481,12 +482,16 @@ module ActiveRecord
           if attributes.is_a?(Array)
             attributes.collect { |attr| _create_record(attr, raise, &block) }
           else
+            record = build_record(attributes)
+
             transaction do
-              add_to_target(build_record(attributes)) do |record|
+              add_to_target(record) do |record|
                 yield(record) if block_given?
                 insert_record(record, true, raise)
               end
             end
+
+            record
           end
         end
 
