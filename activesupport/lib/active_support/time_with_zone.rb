@@ -162,7 +162,7 @@ module ActiveSupport
     #   Time.utc(2005,2,1,15,15,10).in_time_zone("Hawaii").to_json
     #   # => "2005/02/01 05:15:10 -1000"
     def as_json(options = nil)
-      if ActiveSupport::JSON::Encoding.use_standard_json_time_format
+      if ActiveSupport.const_defined?(:JSON, false) && ActiveSupport::JSON::Encoding.use_standard_json_time_format
         xmlschema(ActiveSupport::JSON::Encoding.time_precision)
       else
         %(#{time.strftime("%Y/%m/%d %H:%M:%S")} #{formatted_offset(false)})
